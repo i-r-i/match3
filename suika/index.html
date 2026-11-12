@@ -76,7 +76,7 @@
   </div>
   <div id="board"><div class="grid" id="grid"><div id="world"><div id="line"></div></div></div></div>
 </div>
-<div class="msg" id="msg">Move to aim, click to drop. Matching sweets merge into the next one up.</div>
+<div class="msg" id="msg"></div>
 
 <script>
 /* ---------- CONFIG ---------- */
@@ -386,7 +386,9 @@ function makeBall(level, r) {
   art.appendChild(img); el.appendChild(art); return el;
 }
 const rnd = () => Math.floor(Math.random() * (MAX_DROP + 1));
-function say(t) { $("msg").textContent = t; }
+function say(t) { 
+  // $("msg").textContent = t; 
+}
 
 function spawn(level, x, y, vx, vy, born) {
   const r = R[level] * HIT, el = makeBall(level, R[level]);

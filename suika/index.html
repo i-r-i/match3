@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>dedlck suika</title>
+<link rel="icon" type="image/png" href="../imgs/Rem.png"/>
 <style>
   :root { --bg:#151311; --panel:#584134; --text:#ded2c1; --accent:#4e7958; --board:#483f2e; --cell:#3a2318; --cream:#efdfc0; }
   * { box-sizing: border-box; }
@@ -82,278 +83,325 @@
 /* ---------- CONFIG ---------- */
 // This game lives in a folder (suika/), so assets are loaded from one level up.
 const ASSET = "../";
-// The merge chain, smallest first. Needs exactly 11 images.
-const CHAIN = [
-  "imgs/Abrams.png", "imgs/Apollo.png", "imgs/Baba.png", "imgs/Bebop.png", "imgs/Billy.png", "imgs/Calico.png",
-  "imgs/Celeste.png", "imgs/Drifter.png", "imgs/Dynamo.png", "imgs/Graves.png", "imgs/Haze.png"
+const SWEET_IMAGES = [
+  "imgs/Abrams.png",
+  "imgs/Apollo.png",
+  "imgs/Baba.png",
+  "imgs/Bebop.png",
+  "imgs/Billy.png",
+  "imgs/Calico.png",
+  "imgs/Celeste.png",
+  "imgs/Deadman Danny.png",
+  "imgs/Drifter.png",
+  "imgs/Dynamo.png",
+  "imgs/Graves.png",
+  "imgs/Grey Talon.png",
+  "imgs/Haze.png",
+  "imgs/Holliday.png",
+  "imgs/Infernus.png",
+  "imgs/Ivy.png",
+  "imgs/Kelvin.png",
+  "imgs/Lady Geist.png",
+  "imgs/Lash.png",
+  "imgs/McGinnis.png",
+  "imgs/Mina.png",
+  "imgs/Mirage.png",
+  "imgs/Mo & Krill.png",
+  "imgs/Nurse Harrow.png",
+  "imgs/Paige.png",
+  "imgs/Paradox.png",
+  "imgs/Pocket.png",
+  "imgs/Rat King.png",
+  "imgs/Rem.png",
+  "imgs/Seven.png",
+  "imgs/Shiv.png",
+  "imgs/Silver.png",
+  "imgs/Sinclair.png",
+  "imgs/Solomon.png",
+  "imgs/The Doorman.png",
+  "imgs/Venator.png",
+  "imgs/Victor.png",
+  "imgs/Vindicta.png",
+  "imgs/Violet.png",
+  "imgs/Viscous.png",
+  "imgs/Vyper.png",
+  "imgs/Warden.png",
+  "imgs/Wraith.png",
+  "imgs/Yamato.png"
 ];
+// The merge chain, smallest first. Needs exactly 11 images.
+// const CHAIN = [
+//   "imgs/Abrams.png", "imgs/Apollo.png", "imgs/Baba.png", "imgs/Bebop.png", "imgs/Billy.png", "imgs/Calico.png",
+//   "imgs/Celeste.png", "imgs/Drifter.png", "imgs/Dynamo.png", "imgs/Graves.png", "imgs/Haze.png"
+// ];
+
 const TILE_SHADE = 0.85, MIN_LIGHT = 40;
 // Paste your existing SWEET_COLORS object between the markers, or run make_colors.py.
 const SWEET_COLORS = /*COLORS_START*/{"imgs/Abrams.png": [
-    49,
-    57,
-    68
-  ],
-  "imgs/Apollo.png": [
-    96,
-    52,
-    46
-  ],
-  "imgs/Baba.png": [
-    135,
-    93,
-    90
-  ],
-  "imgs/Bebop.png": [
-    102,
-    79,
-    55
-  ],
-  "imgs/Billy.png": [
-    73,
-    55,
-    47
-  ],
-  "imgs/Cadence.png": [
-    109,
-    148,
-    134
-  ],
-  "imgs/Calico.png": [
-    86,
-    75,
-    83
-  ],
-  "imgs/Celeste.png": [
-    125,
-    118,
-    167
-  ],
-  "imgs/Deadman Danny.png": [
-    82,
-    57,
-    45
-  ],
-  "imgs/Drifter.png": [
-    60,
-    46,
-    49
-  ],
-  "imgs/Dynamo.png": [
-    70,
-    76,
-    61
-  ],
-  "imgs/Fathom.png": [
-    86,
-    117,
-    120
-  ],
-  "imgs/Graves.png": [
-    157,
-    154,
-    151
-  ],
-  "imgs/Grey Talon.png": [
-    122,
-    117,
-    100
-  ],
-  "imgs/Haze.png": [
-    19,
-    12,
-    4
-  ],
-  "imgs/Holliday.png": [
-    96,
-    69,
-    49
-  ],
-  "imgs/Infernus.png": [
-    99,
-    65,
-    51
-  ],
-  "imgs/Ivy.png": [
-    74,
-    63,
-    61
-  ],
-  "imgs/Kelvin.png": [
-    131,
-    109,
-    96
-  ],
-  "imgs/Lady Geist.png": [
-    114,
-    119,
-    106
-  ],
-  "imgs/Lash.png": [
-    132,
-    101,
-    75
-  ],
-  "imgs/McGinnis.png": [
-    112,
-    73,
-    67
-  ],
-  "imgs/Mina.png": [
-    62,
-    51,
-    68
-  ],
-  "imgs/Mirage.png": [
-    69,
-    46,
-    54
-  ],
-  "imgs/Mo & Krill.png": [
-    111,
-    102,
-    92
-  ],
-  "imgs/Nurse Harrow.png": [
-    104,
-    82,
-    79
-  ],
-  "imgs/Paige.png": [
-    129,
-    96,
-    68
-  ],
-  "imgs/Paradox.png": [
-    57,
-    43,
-    44
-  ],
-  "imgs/Pocket.png": [
-    75,
-    58,
-    36
-  ],
-  "imgs/Rat King.png": [
-    87,
-    62,
-    53
-  ],
-  "imgs/Raven.png": [
-    122,
-    88,
-    75
-  ],
-  "imgs/Rem.png": [
-    53,
-    61,
-    75
-  ],
-  "imgs/Rutger.png": [
-    103,
-    82,
-    61
-  ],
-  "imgs/Seven.png": [
-    63,
-    57,
-    32
-  ],
-  "imgs/Shiv.png": [
-    99,
-    80,
-    73
-  ],
-  "imgs/Silver.png": [
-    140,
-    113,
-    104
-  ],
-  "imgs/Sinclair.png": [
-    77,
-    74,
-    96
-  ],
-  "imgs/Solomon.png": [
-    111,
-    100,
-    94
-  ],
-  "imgs/The Boss.png": [
-    117,
-    107,
-    109
-  ],
-  "imgs/The Doorman.png": [
-    124,
-    85,
-    66
-  ],
-  "imgs/Thumper.png": [
-    99,
-    83,
-    93
-  ],
-  "imgs/Trapper.png": [
-    83,
-    73,
-    59
-  ],
-  "imgs/Vandal.png": [
-    126,
-    120,
-    114
-  ],
-  "imgs/Venator.png": [
-    98,
-    79,
-    82
-  ],
-  "imgs/Victor.png": [
-    48,
-    48,
-    52
-  ],
-  "imgs/Vindicta.png": [
-    90,
-    115,
-    166
-  ],
-  "imgs/Violet.png": [
-    69,
-    45,
-    53
-  ],
-  "imgs/Viscous.png": [
-    30,
-    113,
-    26
-  ],
-  "imgs/Vyper.png": [
-    81,
-    60,
-    11
-  ],
-  "imgs/Warden.png": [
-    70,
-    62,
-    68
-  ],
-  "imgs/Wraith.png": [
-    92,
-    79,
-    87
-  ],
-  "imgs/Wrecker.png": [
-    114,
-    125,
-    116
-  ],
-  "imgs/Yamato.png": [
-    74,
-    65,
-    84
-  ]}/*COLORS_END*/;
+  49,
+  57,
+  68
+],
+"imgs/Apollo.png": [
+  96,
+  52,
+  46
+],
+"imgs/Baba.png": [
+  135,
+  93,
+  90
+],
+"imgs/Bebop.png": [
+  102,
+  79,
+  55
+],
+"imgs/Billy.png": [
+  73,
+  55,
+  47
+],
+"imgs/Cadence.png": [
+  109,
+  148,
+  134
+],
+"imgs/Calico.png": [
+  86,
+  75,
+  83
+],
+"imgs/Celeste.png": [
+  125,
+  118,
+  167
+],
+"imgs/Deadman Danny.png": [
+  82,
+  57,
+  45
+],
+"imgs/Drifter.png": [
+  60,
+  46,
+  49
+],
+"imgs/Dynamo.png": [
+  70,
+  76,
+  61
+],
+"imgs/Fathom.png": [
+  86,
+  117,
+  120
+],
+"imgs/Graves.png": [
+  157,
+  154,
+  151
+],
+"imgs/Grey Talon.png": [
+  122,
+  117,
+  100
+],
+"imgs/Haze.png": [
+  19,
+  12,
+  4
+],
+"imgs/Holliday.png": [
+  96,
+  69,
+  49
+],
+"imgs/Infernus.png": [
+  99,
+  65,
+  51
+],
+"imgs/Ivy.png": [
+  74,
+  63,
+  61
+],
+"imgs/Kelvin.png": [
+  131,
+  109,
+  96
+],
+"imgs/Lady Geist.png": [
+  114,
+  119,
+  106
+],
+"imgs/Lash.png": [
+  132,
+  101,
+  75
+],
+"imgs/McGinnis.png": [
+  112,
+  73,
+  67
+],
+"imgs/Mina.png": [
+  62,
+  51,
+  68
+],
+"imgs/Mirage.png": [
+  69,
+  46,
+  54
+],
+"imgs/Mo & Krill.png": [
+  111,
+  102,
+  92
+],
+"imgs/Nurse Harrow.png": [
+  104,
+  82,
+  79
+],
+"imgs/Paige.png": [
+  129,
+  96,
+  68
+],
+"imgs/Paradox.png": [
+  57,
+  43,
+  44
+],
+"imgs/Pocket.png": [
+  75,
+  58,
+  36
+],
+"imgs/Rat King.png": [
+  87,
+  62,
+  53
+],
+"imgs/Raven.png": [
+  122,
+  88,
+  75
+],
+"imgs/Rem.png": [
+  53,
+  61,
+  75
+],
+"imgs/Rutger.png": [
+  103,
+  82,
+  61
+],
+"imgs/Seven.png": [
+  63,
+  57,
+  32
+],
+"imgs/Shiv.png": [
+  99,
+  80,
+  73
+],
+"imgs/Silver.png": [
+  140,
+  113,
+  104
+],
+"imgs/Sinclair.png": [
+  77,
+  74,
+  96
+],
+"imgs/Solomon.png": [
+  111,
+  100,
+  94
+],
+"imgs/The Boss.png": [
+  117,
+  107,
+  109
+],
+"imgs/The Doorman.png": [
+  124,
+  85,
+  66
+],
+"imgs/Thumper.png": [
+  99,
+  83,
+  93
+],
+"imgs/Trapper.png": [
+  83,
+  73,
+  59
+],
+"imgs/Vandal.png": [
+  126,
+  120,
+  114
+],
+"imgs/Venator.png": [
+  98,
+  79,
+  82
+],
+"imgs/Victor.png": [
+  48,
+  48,
+  52
+],
+"imgs/Vindicta.png": [
+  90,
+  115,
+  166
+],
+"imgs/Violet.png": [
+  69,
+  45,
+  53
+],
+"imgs/Viscous.png": [
+  30,
+  113,
+  26
+],
+"imgs/Vyper.png": [
+  81,
+  60,
+  11
+],
+"imgs/Warden.png": [
+  70,
+  62,
+  68
+],
+"imgs/Wraith.png": [
+  92,
+  79,
+  87
+],
+"imgs/Wrecker.png": [
+  114,
+  125,
+  116
+],
+"imgs/Yamato.png": [
+  74,
+  65,
+  84
+]}/*COLORS_END*/;
 const W = 400, H = 480, LINE_Y = 96, G = 1500, DT = 1 / 120;
 const R   = [12, 17, 22, 28, 35, 43, 52, 62, 73, 85, 98];   // radius per level
 const PTS = [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66];
@@ -369,6 +417,19 @@ let balls = [], score = 0, over = false, canDrop = true, cur, nxt, handX = W / 2
 let overT = 0, acc = 0, last = 0, best = 0;
 try { best = +localStorage.getItem("suikaBest") || 0; } catch (e) {}
 $("best").textContent = best;
+
+function getRandomSubarray(arr, size) {
+    var shuffled = arr.slice(0), i = arr.length, temp, index;
+    while (i--) {
+        index = Math.floor((i + 1) * Math.random());
+        temp = shuffled[index];
+        shuffled[index] = shuffled[i];
+        shuffled[i] = temp;
+    }
+    return shuffled.slice(0, size);
+}
+
+const CHAIN = getRandomSubarray(SWEET_IMAGES, 11);
 
 function shade(c) {
   if (!c) return null;

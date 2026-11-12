@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dedlck suika</title>
+<style>
+  :root { --bg:#151311; --panel:#584134; --text:#ded2c1; --accent:#4e7958; --board:#483f2e; --cell:#3a2318; --cream:#efdfc0; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; min-height:100%; background:var(--bg); color:var(--text); font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif; }
+  body { display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px; isolation:isolate; }
+  body::before { content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:url("../logo.png") center / min(90vmin,800px) no-repeat;
+    filter:brightness(0) drop-shadow(0 1px 0 rgba(255,255,255,.35)); opacity:.5; }
+  .layout { display:flex; align-items:center; justify-content:center; gap:36px; flex-wrap:wrap; }
+  .side { display:flex; flex-direction:column; gap:16px; width:170px; }
+  .stat, .side button { position:relative; isolation:isolate; border:0; border-radius:0; text-align:left; }
+  .stat::before, .side button::before { content:""; position:absolute; inset:0; z-index:-1; filter:url(#chip); }
+  .stat { padding:12px 18px 12px 22px; color:var(--cream); }
+  .stat::before { background:var(--panel); }
+  .stat::after { content:""; position:absolute; left:8px; top:14px; bottom:14px; width:5px; background:var(--cream); filter:url(#chip); }
+  .stat span { display:block; font-size:.8rem; letter-spacing:.12em; opacity:.8; }
+  .stat b { font:700 2.1rem/1.1 Georgia,"Times New Roman",serif; }
+  #nextBox { position:relative; height:84px; }
+  .side button { background:none; color:#2c231a; padding:14px 18px; font:700 1rem Georgia,"Times New Roman",serif; letter-spacing:.06em; text-align:center; cursor:pointer; }
+  .side button::before { background:var(--cream); transition:background .15s; }
+  .side button:hover::before { background:#fff4d8; }
+  .side button:active::before { background:var(--accent); }
+  button:focus-visible { outline:3px solid #fff; outline-offset:2px; }
+  #board { --bw:min(calc(100vw - 290px), calc((100vh - 110px) * 428 / 508), 640px); --u:calc(var(--bw) / 428);
+    position:relative; background-color:var(--board); width:var(--bw); padding:calc(var(--u) * 14); isolation:isolate; touch-action:none; user-select:none;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .55' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .08 0 0 0 0 .05 0 0 0 0 .03 1.1 0 0 0 -.38'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='s' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .94 0 0 0 0 .87 0 0 0 0 .75 3 0 0 0 -2.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E"); }
+  #board::after { content:""; position:absolute; inset:calc(var(--u) * -5); z-index:5; pointer-events:none; border:calc(var(--u) * 11) solid var(--cream); border-radius:3px; filter:url(#rough);
+    box-shadow:inset 0 0 0 calc(var(--u) * 2.5) var(--board), inset 0 0 0 calc(var(--u) * 5) var(--cream); }
+  .grid { position:relative; width:100%; aspect-ratio:5/6; }
+  #world { position:absolute; left:0; top:0; width:400px; height:480px; transform-origin:0 0; transform:scale(var(--s,1)); }
+  #line { position:absolute; left:0; right:0; top:96px; border-top:3px dashed var(--cream); opacity:.35; }
+  #line.hot { animation:hot .4s ease-in-out infinite alternate; }
+  @keyframes hot { to { opacity:1; } }
+  .ball { position:absolute; left:0; top:0; border-radius:50%; pointer-events:none; isolation:isolate; }
+  .ball::before { content:""; position:absolute; inset:0; border-radius:50%; z-index:-1; background:var(--tile,var(--cell));
+    box-shadow:0 4px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.25); }
+  .ball::after { content:""; position:absolute; inset:0; z-index:-1; border-radius:50%; background:url("../logo.png") center / 90% no-repeat; transform:rotate(var(--rot,0rad));
+    filter:brightness(0) drop-shadow(0 1px 0 rgba(255,255,255,.6)); opacity:.4; }
+  .ball .art { position:absolute; inset:0; filter:drop-shadow(0 3px 4px rgba(0,0,0,.45)); }
+  .ball img { width:100%; height:100%; object-fit:contain; -webkit-user-drag:none; display:block; transform:rotate(var(--rot,0rad)); }
+  .ball.born::before, .ball.born::after, .ball.born .art { animation:born .28s ease-out; }
+  @keyframes born { from { scale:.55; opacity:.3; } }
+  .particle { position:absolute; border-radius:50%; pointer-events:none; z-index:3; }
+  .msg { min-height:1.4em; opacity:.85; text-align:center; max-width:100%; }
+  @media (max-width:860px) { #board { --bw:min(94vw, 460px); } }
+  @media (max-width:760px) { .side { flex-direction:row; flex-wrap:wrap; width:auto; justify-content:center; } .stat { flex:1 1 90px; } #nextBox { height:70px; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="turbulence" baseFrequency="0.055" numOctaves="1" seed="7" result="n"/>
+    <feComponentTransfer in="n" result="q"><feFuncR type="discrete" tableValues=".5 .15 .85 1"/><feFuncG type="discrete" tableValues=".5 .8 .2 0"/></feComponentTransfer>
+    <feDisplacementMap in="SourceGraphic" in2="q" scale="15" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="chip" x="-8%" y="-8%" width="116%" height="116%">
+    <feTurbulence type="turbulence" baseFrequency="0.09" numOctaves="1" seed="2" result="n"/>
+    <feComponentTransfer in="n" result="q"><feFuncR type="discrete" tableValues=".5 .2 .8 1"/><feFuncG type="discrete" tableValues=".5 .8 .2 0"/></feComponentTransfer>
+    <feDisplacementMap in="SourceGraphic" in2="q" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+<div class="layout">
+  <div class="side">
+    <div class="stat"><span>Score</span><b id="score">0</b></div>
+    <div class="stat"><span>Best</span><b id="best">0</b></div>
+    <div class="stat"><span>Next</span><div id="nextBox"></div></div>
+    <button id="restart">New game</button>
+  </div>
+  <div id="board"><div class="grid" id="grid"><div id="world"><div id="line"></div></div></div></div>
+</div>
+<div class="msg" id="msg">Move to aim, click to drop. Matching sweets merge into the next one up.</div>
+
+<script>
+/* ---------- CONFIG ---------- */
+// This game lives in a folder (suika/), so assets are loaded from one level up.
+const ASSET = "../";
+// The merge chain, smallest first. Needs exactly 11 images.
+const CHAIN = [
+  "imgs/Abrams.png", "imgs/Apollo.png", "imgs/Baba.png", "imgs/Bebop.png", "imgs/Billy.png", "imgs/Calico.png",
+  "imgs/Celeste.png", "imgs/Drifter.png", "imgs/Dynamo.png", "imgs/Graves.png", "imgs/Haze.png"
+];
+const TILE_SHADE = 0.85, MIN_LIGHT = 40;
+// Paste your existing SWEET_COLORS object between the markers, or run make_colors.py.
+const SWEET_COLORS = /*COLORS_START*/{"imgs/Abrams.png": [
+    49,
+    57,
+    68
+  ],
+  "imgs/Apollo.png": [
+    96,
+    52,
+    46
+  ],
+  "imgs/Baba.png": [
+    135,
+    93,
+    90
+  ],
+  "imgs/Bebop.png": [
+    102,
+    79,
+    55
+  ],
+  "imgs/Billy.png": [
+    73,
+    55,
+    47
+  ],
+  "imgs/Cadence.png": [
+    109,
+    148,
+    134
+  ],
+  "imgs/Calico.png": [
+    86,
+    75,
+    83
+  ],
+  "imgs/Celeste.png": [
+    125,
+    118,
+    167
+  ],
+  "imgs/Deadman Danny.png": [
+    82,
+    57,
+    45
+  ],
+  "imgs/Drifter.png": [
+    60,
+    46,
+    49
+  ],
+  "imgs/Dynamo.png": [
+    70,
+    76,
+    61
+  ],
+  "imgs/Fathom.png": [
+    86,
+    117,
+    120
+  ],
+  "imgs/Graves.png": [
+    157,
+    154,
+    151
+  ],
+  "imgs/Grey Talon.png": [
+    122,
+    117,
+    100
+  ],
+  "imgs/Haze.png": [
+    19,
+    12,
+    4
+  ],
+  "imgs/Holliday.png": [
+    96,
+    69,
+    49
+  ],
+  "imgs/Infernus.png": [
+    99,
+    65,
+    51
+  ],
+  "imgs/Ivy.png": [
+    74,
+    63,
+    61
+  ],
+  "imgs/Kelvin.png": [
+    131,
+    109,
+    96
+  ],
+  "imgs/Lady Geist.png": [
+    114,
+    119,
+    106
+  ],
+  "imgs/Lash.png": [
+    132,
+    101,
+    75
+  ],
+  "imgs/McGinnis.png": [
+    112,
+    73,
+    67
+  ],
+  "imgs/Mina.png": [
+    62,
+    51,
+    68
+  ],
+  "imgs/Mirage.png": [
+    69,
+    46,
+    54
+  ],
+  "imgs/Mo & Krill.png": [
+    111,
+    102,
+    92
+  ],
+  "imgs/Nurse Harrow.png": [
+    104,
+    82,
+    79
+  ],
+  "imgs/Paige.png": [
+    129,
+    96,
+    68
+  ],
+  "imgs/Paradox.png": [
+    57,
+    43,
+    44
+  ],
+  "imgs/Pocket.png": [
+    75,
+    58,
+    36
+  ],
+  "imgs/Rat King.png": [
+    87,
+    62,
+    53
+  ],
+  "imgs/Raven.png": [
+    122,
+    88,
+    75
+  ],
+  "imgs/Rem.png": [
+    53,
+    61,
+    75
+  ],
+  "imgs/Rutger.png": [
+    103,
+    82,
+    61
+  ],
+  "imgs/Seven.png": [
+    63,
+    57,
+    32
+  ],
+  "imgs/Shiv.png": [
+    99,
+    80,
+    73
+  ],
+  "imgs/Silver.png": [
+    140,
+    113,
+    104
+  ],
+  "imgs/Sinclair.png": [
+    77,
+    74,
+    96
+  ],
+  "imgs/Solomon.png": [
+    111,
+    100,
+    94
+  ],
+  "imgs/The Boss.png": [
+    117,
+    107,
+    109
+  ],
+  "imgs/The Doorman.png": [
+    124,
+    85,
+    66
+  ],
+  "imgs/Thumper.png": [
+    99,
+    83,
+    93
+  ],
+  "imgs/Trapper.png": [
+    83,
+    73,
+    59
+  ],
+  "imgs/Vandal.png": [
+    126,
+    120,
+    114
+  ],
+  "imgs/Venator.png": [
+    98,
+    79,
+    82
+  ],
+  "imgs/Victor.png": [
+    48,
+    48,
+    52
+  ],
+  "imgs/Vindicta.png": [
+    90,
+    115,
+    166
+  ],
+  "imgs/Violet.png": [
+    69,
+    45,
+    53
+  ],
+  "imgs/Viscous.png": [
+    30,
+    113,
+    26
+  ],
+  "imgs/Vyper.png": [
+    81,
+    60,
+    11
+  ],
+  "imgs/Warden.png": [
+    70,
+    62,
+    68
+  ],
+  "imgs/Wraith.png": [
+    92,
+    79,
+    87
+  ],
+  "imgs/Wrecker.png": [
+    114,
+    125,
+    116
+  ],
+  "imgs/Yamato.png": [
+    74,
+    65,
+    84
+  ]}/*COLORS_END*/;
+const W = 400, H = 480, LINE_Y = 96, G = 1500, DT = 1 / 120;
+const R   = [12, 17, 22, 28, 35, 43, 52, 62, 73, 85, 98];   // radius per level
+const PTS = [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66];
+const MAX_DROP = 4;       // highest level that can be dropped (0-4)
+const MU_BALL = 0.05;     // friction between sweets (lower = slide more)
+const MU_FLOOR = 0.10;    // friction with the floor
+const HIT = 1;            // collision size vs. drawn size (1 = identical)
+/* ---------------------------- */
+
+const $ = id => document.getElementById(id);
+const grid = $("grid"), world = $("world"), line = $("line"), nextBox = $("nextBox");
+let balls = [], score = 0, over = false, canDrop = true, cur, nxt, handX = W / 2, handEl = null;
+let overT = 0, acc = 0, last = 0, best = 0;
+try { best = +localStorage.getItem("suikaBest") || 0; } catch (e) {}
+$("best").textContent = best;
+
+function shade(c) {
+  if (!c) return null;
+  let [r, g, b] = c.map(v => v * TILE_SHADE);
+  const l = .299 * r + .587 * g + .114 * b;
+  if (l < MIN_LIGHT) { const t = (MIN_LIGHT - l) / (255 - l); r += (255 - r) * t; g += (255 - g) * t; b += (255 - b) * t; }
+  return `rgb(${r | 0}, ${g | 0}, ${b | 0})`;
+}
+function makeBall(level, r) {
+  const el = document.createElement("div");
+  el.className = "ball"; el.style.width = el.style.height = 2 * r + "px";
+  const bg = shade(SWEET_COLORS[CHAIN[level]]); if (bg) el.style.setProperty("--tile", bg);
+  const art = document.createElement("div"); art.className = "art";
+  const img = new Image(); img.src = ASSET + CHAIN[level]; img.alt = ""; img.draggable = false;
+  art.appendChild(img); el.appendChild(art); return el;
+}
+const rnd = () => Math.floor(Math.random() * (MAX_DROP + 1));
+function say(t) { $("msg").textContent = t; }
+
+function spawn(level, x, y, vx, vy, born) {
+  const r = R[level] * HIT, el = makeBall(level, R[level]);
+  if (born) { el.classList.add("born"); setTimeout(() => el.classList.remove("born"), 320); }
+  world.appendChild(el);
+  const m = r * r, b = { level, x, y, vx, vy, r, m, I: .5 * m * r * r, a: 0, w: 0, el, age: 0, dead: false };
+  balls.push(b); return b;
+}
+
+function burst(x, y, color, r) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  for (let i = 0; i < 10; i++) {
+    const p = document.createElement("div"), s = 4 + Math.random() * 5 + r * .06;
+    p.className = "particle";
+    p.style.cssText = `width:${s}px;height:${s}px;left:${x - s / 2}px;top:${y - s / 2}px;background:${i % 2 ? "#fff" : (color || "#fff")}`;
+    world.appendChild(p);
+    const a = Math.random() * 6.283, d = r * (.7 + Math.random() * .6);
+    p.animate([{ transform: "translate(0,0) scale(1)", opacity: 1 },
+      { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) scale(0)`, opacity: 0 }],
+      { duration: 420 + Math.random() * 160, easing: "ease-out" }).onfinish = () => p.remove();
+  }
+}
+
+function addScore(n) {
+  score += n; $("score").textContent = score;
+  if (score > best) { best = score; $("best").textContent = best; try { localStorage.setItem("suikaBest", best); } catch (e) {} }
+}
+
+function step(dt) {
+  for (const b of balls) { b.vy += G * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.a += b.w * dt; b.age += dt; }
+  const pairs = [];
+  for (const b of balls) b.t = false;
+  for (let it = 0; it < 4; it++) {
+    for (let i = 0; i < balls.length; i++) {
+      const a = balls[i];
+      for (let j = i + 1; j < balls.length; j++) {
+        const b = balls[j], dx = b.x - a.x, dy = b.y - a.y, rr = a.r + b.r, d2 = dx * dx + dy * dy;
+        if (d2 >= rr * rr || d2 === 0) continue;
+        if (a.level === b.level && it === 0 && !a.dead && !b.dead) { a.dead = b.dead = true; pairs.push([a, b]); continue; }
+        if (a.dead || b.dead) continue;
+        a.t = b.t = true;
+        const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, ov = rr - d, tot = a.m + b.m;
+        a.x -= nx * ov * b.m / tot; a.y -= ny * ov * b.m / tot;
+        b.x += nx * ov * a.m / tot; b.y += ny * ov * a.m / tot;
+        const rvx = b.vx - a.vx, rvy = b.vy - a.vy, vn = rvx * nx + rvy * ny;
+        if (vn < 0) {
+          const inv = 1 / a.m + 1 / b.m, e = vn < -80 ? .12 : 0, jn = -(1 + e) * vn / inv;
+          a.vx -= jn * nx / a.m; a.vy -= jn * ny / a.m; b.vx += jn * nx / b.m; b.vy += jn * ny / b.m;
+          const tx = -ny, ty = nx, vt = rvx * tx + rvy * ty - b.r * b.w - a.r * a.w;
+          const jt = Math.max(-MU_BALL * jn, Math.min(MU_BALL * jn, -vt / (3 * inv)));
+          a.vx -= jt * tx / a.m; a.vy -= jt * ty / a.m; b.vx += jt * tx / b.m; b.vy += jt * ty / b.m;
+          a.w -= a.r * jt / a.I; b.w -= b.r * jt / b.I;
+        }
+      }
+    }
+    for (const b of balls) {
+      if (b.dead) continue;
+      if (b.x < b.r) { b.x = b.r; if (b.vx < 0) b.vx = 0; }
+      if (b.x > W - b.r) { b.x = W - b.r; if (b.vx > 0) b.vx = 0; }
+      if (b.y > H - b.r) {
+        b.y = H - b.r; b.t = true;
+        if (b.vy > 0) {
+          const jn = b.m * b.vy; b.vy = b.vy > 200 ? -b.vy * .1 : 0;
+          const vt = b.vx - b.w * b.r, jt = Math.max(-MU_FLOOR * jn, Math.min(MU_FLOOR * jn, -vt * b.m / 3));
+          b.vx += jt / b.m; b.w -= b.r * jt / b.I;
+        }
+      }
+    }
+  }
+  for (const b of balls) { if (b.dead) continue; b.vx *= .999; b.w *= .998; if (b.t && Math.abs(b.vx) < 2 && Math.abs(b.vy) < 20 && Math.abs(b.w * b.r) < 2) { b.vx = b.vy = b.w = 0; } }
+  for (const [a, b] of pairs) {
+    balls = balls.filter(x => x !== a && x !== b); a.el.remove(); b.el.remove();
+    const mx = (a.x * a.m + b.x * b.m) / (a.m + b.m), my = (a.y * a.m + b.y * b.m) / (a.m + b.m);
+    burst(mx, my, shade(SWEET_COLORS[CHAIN[a.level]]), a.r * 1.6);
+    addScore(PTS[a.level]);
+    if (a.level < R.length - 1) { const n = spawn(a.level + 1, mx, my, (a.vx + b.vx) / 2, (a.vy + b.vy) / 2, true); n.a = a.a; n.w = (a.w + b.w) / 2; }
+    else { addScore(100); say("Two of the biggest! +100"); }
+  }
+}
+
+function render() {
+  for (const b of balls) {
+    const vr = R[b.level];
+    b.el.style.transform = `translate(${b.x - vr}px,${b.y - vr}px)`;
+    b.el.style.setProperty("--rot", b.a + "rad");
+  }
+}
+
+function posHand() {
+  if (!handEl) return;
+  const r = R[cur]; handX = Math.max(r, Math.min(W - r, handX));
+  handEl.style.transform = `translate(${handX - r}px,${44 - r}px)`;
+}
+function showHand() {
+  if (handEl) handEl.remove();
+  handEl = makeBall(cur, R[cur]); world.appendChild(handEl); posHand();
+}
+function showNext() {
+  nextBox.innerHTML = "";
+  const el = makeBall(nxt, 12 + R[nxt] * .9);
+  el.style.left = "50%"; el.style.top = "50%"; el.style.transform = "translate(-50%,-50%)";
+  nextBox.appendChild(el);
+}
+function drop() {
+  if (!canDrop || over) return;
+  canDrop = false;
+  spawn(cur, handX, 44, 0, 0, false);
+  handEl.remove(); handEl = null;
+  cur = nxt; nxt = rnd();
+  setTimeout(() => { if (!over) { showHand(); showNext(); canDrop = true; } }, 550);
+}
+function aim(e) { const rc = grid.getBoundingClientRect(); handX = (e.clientX - rc.left) / (rc.width / W); posHand(); }
+grid.addEventListener("pointermove", aim);
+grid.addEventListener("pointerdown", aim);
+grid.addEventListener("pointerup", e => { aim(e); drop(); });
+
+function gameOver() {
+  over = true; line.classList.remove("hot");
+  if (handEl) { handEl.remove(); handEl = null; }
+  say(`Overflow! Final score: ${score}. Press “New game” to try again.`);
+}
+
+function newGame() {
+  balls.forEach(b => b.el.remove()); balls = [];
+  world.querySelectorAll(".particle").forEach(p => p.remove());
+  score = 0; $("score").textContent = 0; over = false; canDrop = true; overT = 0; acc = 0;
+  line.classList.remove("hot");
+  cur = rnd(); nxt = rnd(); showHand(); showNext();
+  say("Move to aim, click to drop. Matching sweets merge into the next one up.");
+}
+
+function frame(t) {
+  const dt = Math.min(.05, (t - last) / 1000 || 0); last = t;
+  if (!over) {
+    acc += dt; while (acc >= DT) { step(DT); acc -= DT; }
+    const danger = balls.some(b => !b.dead && b.age > 1.2 && b.y - b.r < LINE_Y);
+    overT = danger ? overT + dt : Math.max(0, overT - dt * 2);
+    line.classList.toggle("hot", overT > 0);
+    if (overT > 2.5) gameOver();
+  }
+  render(); requestAnimationFrame(frame);
+}
+
+new ResizeObserver(() => world.style.setProperty("--s", Math.min(grid.clientWidth / W, grid.clientHeight / H))).observe(grid);
+$("restart").addEventListener("click", newGame);
+newGame(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>

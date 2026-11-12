@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dedlck</title>
+<style>
+  :root {
+    --bg: #151311;
+    --panel: #584134;
+    --text: #ded2c1;
+    --accent: #4e7958;
+    --board: #483f2e;
+    --cell: #3a2318;
+    --cream: #efdfc0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text);
+    font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif; }
+  body { display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px; isolation: isolate; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: url("logo.png") center / min(90vmin, 800px) no-repeat;
+    filter: brightness(0) drop-shadow(0 1px 0 rgba(255, 255, 255, .35));
+    opacity: .5;
+  }
+  h1 { margin: 0; font-size: 2rem; letter-spacing: .02em; }
+  .layout { display: flex; align-items: center; justify-content: center; gap: 36px; flex-wrap: wrap; }
+  .side { display: flex; flex-direction: column; gap: 16px; width: 150px; }
+  .stat, .side button, .side label.btn { position: relative; isolation: isolate; border: 0; border-radius: 0; text-align: left; }
+  .stat::before, .side button::before, .side label.btn::before { content: ""; position: absolute; inset: 0; z-index: -1; filter: url(#chip); }
+  .stat { background: none; padding: 12px 18px 12px 22px; color: var(--cream); }
+  .stat::before { background: var(--panel); }
+  .stat::after { content: ""; position: absolute; left: 8px; top: 14px; bottom: 14px; width: 5px; background: var(--cream); filter: url(#chip); }
+  .stat span { display: block; font-size: .8rem; letter-spacing: .12em; opacity: .8; }
+  .stat b { font: 700 2.1rem/1.1 Georgia, "Times New Roman", serif; }
+  .side button, .side label.btn { background: none; color: #2c231a; padding: 14px 18px; font: 700 1rem Georgia, "Times New Roman", serif; letter-spacing: .06em; text-align: center; cursor: pointer; }
+  .side button::before { background: var(--cream); transition: background .15s; }
+  .side button:hover::before { background: #fff4d8; }
+  .side button:active::before { background: var(--accent); }
+  .side #hint { color: var(--cream); }
+  .side #hint::before { background: none; box-shadow: inset 0 0 0 3px var(--cream); }
+  .side #hint:hover { color: #fff4d8; }
+  @media (max-width: 760px) { .side { flex-direction: row; flex-wrap: wrap; width: auto; justify-content: center; } .stat { flex: 1 1 90px; } }
+  button, label.btn { background: var(--accent); color: #2a1630; border: 0; border-radius: 10px;
+    padding: 10px 16px; font: inherit; font-weight: 700; cursor: pointer; }
+  button:focus-visible, label.btn:focus-within { outline: 3px solid #fff; outline-offset: 2px; }
+  #board {
+    position: relative; background-color: var(--board); border-radius: 18px; padding: 26px;
+    width: min(94vw, 560px); aspect-ratio: 1; touch-action: none; user-select: none; isolation: isolate;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .55' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .08 0 0 0 0 .05 0 0 0 0 .03 1.1 0 0 0 -.38'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='s' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .94 0 0 0 0 .87 0 0 0 0 .75 3 0 0 0 -2.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  }
+  #board::after {
+    content: ""; position: absolute; inset: -6px; z-index: 5; pointer-events: none;
+    border: 14px solid var(--cream); border-radius: 3px; filter: url(#rough);
+    box-shadow: inset 0 0 0 3px var(--board), inset 0 0 0 6px var(--cream);
+  }
+  .grid { position: relative; width: 100%; height: 100%; clip-path: inset(-4px -30px -30px -30px); }
+  .cell { position: absolute; border-radius: 50%; padding: 1%;
+    transition: transform .22s ease, opacity .2s ease; cursor: pointer; }
+  .cell::before { content: ""; position: absolute; inset: 3%; background: var(--tile, var(--cell)); border-radius: 50%; z-index: -1; box-shadow: 0 4px 8px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .25);}
+  .cell::after {
+    content: ""; position: absolute; inset: 3%; z-index: -1; border-radius: 50%;
+    background: url("logo.png") center / 90% no-repeat;
+    filter: brightness(0) drop-shadow(0 1px 0 rgba(255, 255, 255, .6));
+    opacity: .4; pointer-events: none;
+  }
+  .cell.pop::after { animation: pop .3s ease-out forwards; }
+  .cell img, .cell .fallback { width: 100%; height: 100%; object-fit: contain; pointer-events: none;
+    -webkit-user-drag: none; display: block; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .45)); }
+  .fallback { border-radius: 50%; }
+  .cell.sel { outline: 3px solid #fff; outline-offset: -2px; }
+  .cell.hint::before { animation: hintGlow .7s ease-in-out infinite alternate; }
+  .cell.hint img, .cell.hint .fallback { animation: hintBob .7s ease-in-out infinite alternate; }
+  @keyframes hintGlow {
+    from { box-shadow: 0 4px 8px rgba(0,0,0,.4), 0 0 0 0 rgba(239,223,192,0); }
+    to   { box-shadow: 0 4px 8px rgba(0,0,0,.4), 0 0 0 5px rgba(239,223,192,.9), 0 0 16px 4px rgba(239,223,192,.6); }
+  }
+  @keyframes hintBob { to { scale: 1.1; } }
+  .cell.pop { z-index: 2; }
+  .cell.pop::before, .cell.pop img, .cell.pop .fallback { animation: pop .3s ease-out forwards; }
+  @keyframes pop {
+    0%   { scale: 1;    opacity: 1; }
+    35%  { scale: 1.25; opacity: 1; }
+    100% { scale: 0;    opacity: 0; }
+  }
+  .particle { position: absolute; border-radius: 50%; pointer-events: none; z-index: 3; }
+  .msg { min-height: 1.4em; opacity: .85; text-align: center; max-width: 560px; }
+  @media (prefers-reduced-motion: reduce) { .cell { transition: none; } }
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="turbulence" baseFrequency="0.055" numOctaves="1" seed="7" result="n"/>
+      <feComponentTransfer in="n" result="q">
+        <feFuncR type="discrete" tableValues=".5 .15 .85 1"/>
+        <feFuncG type="discrete" tableValues=".5 .8 .2 0"/>
+      </feComponentTransfer>
+      <feDisplacementMap in="SourceGraphic" in2="q" scale="15" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="chip" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="turbulence" baseFrequency="0.09" numOctaves="1" seed="2" result="n"/>
+      <feComponentTransfer in="n" result="q">
+        <feFuncR type="discrete" tableValues=".5 .2 .8 1"/>
+        <feFuncG type="discrete" tableValues=".5 .8 .2 0"/>
+      </feComponentTransfer>
+      <feDisplacementMap in="SourceGraphic" in2="q" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
+  <div class="bar">
+    <div class="layout">
+      <div class="side">
+        <div class="stat"><span>Score</span><b id="score">0</b></div>
+        <div class="stat"><span>Moves</span><b id="moves">30</b></div>
+        <div class="stat"><span>Best</span><b id="best">0</b></div>
+        <button id="restart">New game</button>
+        <button id="hint">Hint</button>
+      </div>
+      <div id="board"><div class="grid" id="grid"></div></div>
+    </div>
+  </div>
+  <div class="msg" id="msg"></div>
+
+<script>
+/* ---------- CONFIG ---------- */
+// Option 1: list your PNG paths here (relative to this HTML file).
+// Use 4 to 8 images. Leave the list empty to use coloured placeholders
+// or to pick files with the "Load my PNGs" button.
+const SWEET_IMAGES = [
+  "imgs/Abrams.png",
+  "imgs/Apollo.png",
+  "imgs/Baba.png",
+  "imgs/Bebop.png",
+  "imgs/Billy.png",
+  "imgs/Calico.png",
+  "imgs/Celeste.png",
+  "imgs/Deadman Danny.png",
+  "imgs/Drifter.png",
+  "imgs/Dynamo.png",
+  "imgs/Graves.png",
+  "imgs/Grey Talon.png",
+  "imgs/Haze.png",
+  "imgs/Holliday.png",
+  "imgs/Infernus.png",
+  "imgs/Ivy.png",
+  "imgs/Kelvin.png",
+  "imgs/Lady Geist.png",
+  "imgs/Lash.png",
+  "imgs/McGinnis.png",
+  "imgs/Mina.png",
+  "imgs/Mirage.png",
+  "imgs/Mo & Krill.png",
+  "imgs/Nurse Harrow.png",
+  "imgs/Paige.png",
+  "imgs/Paradox.png",
+  "imgs/Pocket.png",
+  "imgs/Rat King.png",
+  "imgs/Rem.png",
+  "imgs/Seven.png",
+  "imgs/Shiv.png",
+  "imgs/Silver.png",
+  "imgs/Sinclair.png",
+  "imgs/Solomon.png",
+  "imgs/The Doorman.png",
+  "imgs/Venator.png",
+  "imgs/Victor.png",
+  "imgs/Vindicta.png",
+  "imgs/Violet.png",
+  "imgs/Viscous.png",
+  "imgs/Vyper.png",
+  "imgs/Warden.png",
+  "imgs/Wraith.png",
+  "imgs/Yamato.png"
+];
+const SIZE = 8;          // board is SIZE x SIZE
+const START_MOVES = 100;
+const TILE_SHADE = 0.85; 
+const PLACEHOLDERS = ["#ff5d73", "#ffb703", "#8ecae6", "#80ed99", "#c77dff", "#ff9e6d"];
+const SAT_BOOST = 1.8;
+const MAX_TYPES = 7;
+const MIN_LIGHTNESS = 40;
+const MIN_COLOUR_DIST = 40;
+/* ---------------------------- */
+
+const grid = document.getElementById("grid");
+const $ = id => document.getElementById(id);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+let sweets = [];            // array of {src} or {color}
+let board = [];             // board[r][c] = {type, el}
+let selected = null, busy = false, score = 0, moves = START_MOVES;
+let best = 0;
+try { best = +localStorage.getItem("sweetBest") || 0; } catch (e) {}
+$("best").textContent = best;
+
+const SWEET_COLORS = {
+  "imgs/Abrams.png": [
+    49,
+    57,
+    68
+  ],
+  "imgs/Apollo.png": [
+    96,
+    52,
+    46
+  ],
+  "imgs/Baba.png": [
+    135,
+    93,
+    90
+  ],
+  "imgs/Bebop.png": [
+    102,
+    79,
+    55
+  ],
+  "imgs/Billy.png": [
+    73,
+    55,
+    47
+  ],
+  "imgs/Cadence.png": [
+    109,
+    148,
+    134
+  ],
+  "imgs/Calico.png": [
+    86,
+    75,
+    83
+  ],
+  "imgs/Celeste.png": [
+    125,
+    118,
+    167
+  ],
+  "imgs/Deadman Danny.png": [
+    82,
+    57,
+    45
+  ],
+  "imgs/Drifter.png": [
+    60,
+    46,
+    49
+  ],
+  "imgs/Dynamo.png": [
+    70,
+    76,
+    61
+  ],
+  "imgs/Fathom.png": [
+    86,
+    117,
+    120
+  ],
+  "imgs/Graves.png": [
+    157,
+    154,
+    151
+  ],
+  "imgs/Grey Talon.png": [
+    122,
+    117,
+    100
+  ],
+  "imgs/Haze.png": [
+    19,
+    12,
+    4
+  ],
+  "imgs/Holliday.png": [
+    96,
+    69,
+    49
+  ],
+  "imgs/Infernus.png": [
+    99,
+    65,
+    51
+  ],
+  "imgs/Ivy.png": [
+    74,
+    63,
+    61
+  ],
+  "imgs/Kelvin.png": [
+    131,
+    109,
+    96
+  ],
+  "imgs/Lady Geist.png": [
+    114,
+    119,
+    106
+  ],
+  "imgs/Lash.png": [
+    132,
+    101,
+    75
+  ],
+  "imgs/McGinnis.png": [
+    112,
+    73,
+    67
+  ],
+  "imgs/Mina.png": [
+    62,
+    51,
+    68
+  ],
+  "imgs/Mirage.png": [
+    69,
+    46,
+    54
+  ],
+  "imgs/Mo & Krill.png": [
+    111,
+    102,
+    92
+  ],
+  "imgs/Nurse Harrow.png": [
+    104,
+    82,
+    79
+  ],
+  "imgs/Paige.png": [
+    129,
+    96,
+    68
+  ],
+  "imgs/Paradox.png": [
+    57,
+    43,
+    44
+  ],
+  "imgs/Pocket.png": [
+    75,
+    58,
+    36
+  ],
+  "imgs/Rat King.png": [
+    87,
+    62,
+    53
+  ],
+  "imgs/Raven.png": [
+    122,
+    88,
+    75
+  ],
+  "imgs/Rem.png": [
+    53,
+    61,
+    75
+  ],
+  "imgs/Rutger.png": [
+    103,
+    82,
+    61
+  ],
+  "imgs/Seven.png": [
+    63,
+    57,
+    32
+  ],
+  "imgs/Shiv.png": [
+    99,
+    80,
+    73
+  ],
+  "imgs/Silver.png": [
+    140,
+    113,
+    104
+  ],
+  "imgs/Sinclair.png": [
+    77,
+    74,
+    96
+  ],
+  "imgs/Solomon.png": [
+    111,
+    100,
+    94
+  ],
+  "imgs/The Boss.png": [
+    117,
+    107,
+    109
+  ],
+  "imgs/The Doorman.png": [
+    124,
+    85,
+    66
+  ],
+  "imgs/Thumper.png": [
+    99,
+    83,
+    93
+  ],
+  "imgs/Trapper.png": [
+    83,
+    73,
+    59
+  ],
+  "imgs/Vandal.png": [
+    126,
+    120,
+    114
+  ],
+  "imgs/Venator.png": [
+    98,
+    79,
+    82
+  ],
+  "imgs/Victor.png": [
+    48,
+    48,
+    52
+  ],
+  "imgs/Vindicta.png": [
+    90,
+    115,
+    166
+  ],
+  "imgs/Violet.png": [
+    69,
+    45,
+    53
+  ],
+  "imgs/Viscous.png": [
+    30,
+    113,
+    26
+  ],
+  "imgs/Vyper.png": [
+    81,
+    60,
+    11
+  ],
+  "imgs/Warden.png": [
+    70,
+    62,
+    68
+  ],
+  "imgs/Wraith.png": [
+    92,
+    79,
+    87
+  ],
+  "imgs/Wrecker.png": [
+    114,
+    125,
+    116
+  ],
+  "imgs/Yamato.png": [
+    74,
+    65,
+    84
+  ]
+};
+ 
+function boost(rgb) {
+  const lum = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
+  return rgb.map(v => Math.max(0, Math.min(255, lum + (v - lum) * SAT_BOOST)));
+}
+
+function shade(rgb) {
+  if (!rgb) return null;
+  let [r, g, b] = boost(rgb).map(v => v * TILE_SHADE);
+  // Lift very dark tiles toward white (keeps a hint of the original hue).
+  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+  if (lum < MIN_LIGHTNESS) {
+    const t = (MIN_LIGHTNESS - lum) / (255 - lum);
+    r += (255 - r) * t; g += (255 - g) * t; b += (255 - b) * t;
+  }
+  return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+}
+
+function colourDist(a, b) {
+  return (a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2;
+}
+
+// Greedy "farthest point" pick: start with a random image, then keep adding
+// whichever remaining image is furthest from everything already chosen.
+function pickDistinct(srcs, n) {
+  const col = s => boost(SWEET_COLORS[s] || [128, 128, 128]);
+  const minD = (s, chosen) => Math.min(...chosen.map(c => Math.sqrt(colourDist(col(s), col(c)))));
+  const pool = [...srcs].sort(() => Math.random() - .5);
+  const chosen = [pool.shift()];
+  while (chosen.length < Math.min(n, srcs.length) && pool.length) {
+    const scored = pool.map((s, i) => ({ i, d: minD(s, chosen) }));
+    const ok = scored.filter(x => x.d >= MIN_COLOUR_DIST);
+    const pick = ok.length
+      ? ok[Math.floor(Math.random() * ok.length)]
+      : scored.reduce((a, b) => (b.d > a.d ? b : a));
+    chosen.push(pool.splice(pick.i, 1)[0]);
+  }
+  return chosen;
+}
+
+async function loadSweets(srcs) {
+  if (srcs.length >= 3) {
+    const picked = pickDistinct(srcs, MAX_TYPES);
+    sweets = picked.map(src => ({ src, bg: shade(SWEET_COLORS[src]) }));
+  } else {
+    sweets = PLACEHOLDERS.map(color => ({ color }));
+  }
+}
+ 
+function pct(n) { return (n * 100 / SIZE) + "%"; }
+ 
+function makeEl(type) {
+  const el = document.createElement("div");
+  el.className = "cell";
+  el.style.width = pct(1); el.style.height = pct(1);
+  const s = sweets[type];
+  if (s.bg) el.style.setProperty("--tile", s.bg);
+  if (s.src) {
+    const img = document.createElement("img");
+    img.src = s.src; img.alt = ""; img.draggable = false;
+    el.appendChild(img);
+  } else {
+    const d = document.createElement("div");
+    d.className = "fallback"; d.style.background = s.color;
+    el.appendChild(d);
+  }
+  return el;
+}
+
+
+
+function place(el, r, c) {
+  el.style.transform = `translate(${c * 100}%, ${r * 100}%)`;
+  el.dataset.r = r; el.dataset.c = c;
+}
+
+function randType() { return Math.floor(Math.random() * sweets.length); }
+
+function hasMatchAt(r, c, t) {
+  const g = (rr, cc) => board[rr] && board[rr][cc] ? board[rr][cc].type : -1;
+  return (g(r, c-1) === t && g(r, c-2) === t) || (g(r-1, c) === t && g(r-2, c) === t);
+}
+
+function newGame() {
+  grid.innerHTML = ""; board = [];
+  score = 0; moves = START_MOVES; selected = null; busy = false;
+  for (let r = 0; r < SIZE; r++) {
+    board[r] = [];
+    for (let c = 0; c < SIZE; c++) {
+      let t; do { t = randType(); } while (hasMatchAt(r, c, t));
+      const el = makeEl(t); place(el, r, c); grid.appendChild(el);
+      board[r][c] = { type: t, el };
+    }
+  }
+  updateHud();
+  say("Swap two neighbouring sweets to line up three or more.");
+  if (!findMoves().length) newGame();
+}
+
+function updateHud() {
+  $("score").textContent = score; $("moves").textContent = moves;
+  if (score > best) {
+    best = score; $("best").textContent = best;
+    try { localStorage.setItem("sweetBest", best); } catch (e) {}
+  }
+}
+function say(t) { 
+  // $("msg").textContent = t; 
+}
+
+function findMatches() {
+  const hit = new Set();
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE - 2; c++) {
+      const t = board[r][c]?.type;
+      if (t == null) continue;
+      if (board[r][c+1]?.type === t && board[r][c+2]?.type === t) {
+        let k = c; while (k < SIZE && board[r][k]?.type === t) hit.add(r * SIZE + k++);
+      }
+    }
+  }
+  for (let c = 0; c < SIZE; c++) {
+    for (let r = 0; r < SIZE - 2; r++) {
+      const t = board[r][c]?.type;
+      if (t == null) continue;
+      if (board[r+1][c]?.type === t && board[r+2][c]?.type === t) {
+        let k = r; while (k < SIZE && board[k][c]?.type === t) hit.add(k++ * SIZE + c);
+      }
+    }
+  }
+  return [...hit];
+}
+
+function swapCells(a, b) {
+  const A = board[a.r][a.c], B = board[b.r][b.c];
+  board[a.r][a.c] = B; board[b.r][b.c] = A;
+  place(A.el, b.r, b.c); place(B.el, a.r, a.c);
+}
+
+function findMoves() {
+  const out = [];
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+    for (const [dr, dc] of [[0,1],[1,0]]) {
+      const r2 = r + dr, c2 = c + dc;
+      if (r2 >= SIZE || c2 >= SIZE) continue;
+      const a = {r, c}, b = {r: r2, c: c2};
+      const t = board[r][c]; board[r][c] = board[r2][c2]; board[r2][c2] = t;
+      const ok = findMatches().length > 0;
+      board[r2][c2] = board[r][c]; board[r][c] = t;
+      if (ok) out.push([a, b]);
+    }
+  }
+  return out;
+}
+
+async function trySwap(a, b) {
+  busy = true;
+  swapCells(a, b);
+  await wait(240);
+  if (!findMatches().length) {
+    swapCells(a, b);           // swap back
+    await wait(240);
+    say("No match there. Try another swap.");
+  } else {
+    moves--; updateHud();
+    await resolve();
+  }
+  clearSel();
+  busy = false;
+  if (moves <= 0) return gameOver();
+  if (!findMoves().length) { say("No moves left. Shuffling…"); await shuffle(); }
+}
+
+function burst(r, c, color) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cell = grid.clientWidth / SIZE;
+  const cx = (c + .5) * cell, cy = (r + .5) * cell;
+  for (let i = 0; i < 8; i++) {
+    const p = document.createElement("div");
+    p.className = "particle";
+    const s = cell * (.1 + Math.random() * .08);
+    p.style.cssText = `width:${s}px;height:${s}px;left:${cx - s / 2}px;top:${cy - s / 2}px;` +
+                      `background:${i % 2 ? "#fff" : (color || "#fff")}`;
+    grid.appendChild(p);
+    const ang = (i / 8) * Math.PI * 2 + Math.random() * .6;
+    const dist = cell * (.45 + Math.random() * .35);
+    p.animate([
+      { transform: "translate(0, 0) scale(1)", opacity: 1 },
+      { transform: `translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist}px) scale(0)`, opacity: 0 }
+    ], { duration: 420 + Math.random() * 120, easing: "ease-out" }).onfinish = () => p.remove();
+  }
+}
+
+async function resolve() {
+  let combo = 0, m;
+  while ((m = findMatches()).length) {
+    combo++;
+    score += m.length * 10 * combo;
+    updateHud();
+    if (combo > 1) say(`Combo x${combo}!`); else say("");
+    m.forEach(i => {
+      const r = Math.floor(i / SIZE), c = i % SIZE;
+      const cellObj = board[r][c], s = sweets[cellObj.type];
+      cellObj.el.classList.add("pop");
+      burst(r, c, s.bg || s.color);
+    });
+    await wait(300);
+
+    m.forEach(i => {
+      const r = Math.floor(i / SIZE), c = i % SIZE;
+      board[r][c].el.remove(); board[r][c] = null;
+    });
+    // gravity
+    for (let c = 0; c < SIZE; c++) {
+      let write = SIZE - 1;
+      for (let r = SIZE - 1; r >= 0; r--) {
+        if (board[r][c]) {
+          if (r !== write) { board[write][c] = board[r][c]; board[r][c] = null; place(board[write][c].el, write, c); }
+          write--;
+        }
+      }
+      // refill from the top
+      for (let r = write; r >= 0; r--) {
+        const t = randType(), el = makeEl(t);
+        place(el, r - (write + 1), c);   // start above the board
+        grid.appendChild(el);
+        board[r][c] = { type: t, el };
+        void el.offsetWidth;
+        place(el, r, c);
+      }
+    }
+    await wait(300);
+  }
+}
+
+async function shuffle() {
+  busy = true;
+  const cells = board.flat();
+  do {
+    cells.sort(() => Math.random() - .5);
+    cells.forEach((obj, i) => { board[Math.floor(i / SIZE)][i % SIZE] = obj; });
+  } while (findMatches().length || !findMoves().length);
+  cells.forEach((obj, i) => place(obj.el, Math.floor(i / SIZE), i % SIZE));
+  await wait(300);
+  say(""); busy = false;
+}
+
+function gameOver() {
+  busy = true;
+  say(`Out of moves! Final score: ${score}. Press “New game” to play again.`);
+}
+
+function clearSel() {
+  if (selected) board[selected.r][selected.c]?.el.classList.remove("sel");
+  selected = null;
+}
+
+function cellFromEvent(e) {
+  const rect = grid.getBoundingClientRect();
+  const c = Math.floor((e.clientX - rect.left) / rect.width * SIZE);
+  const r = Math.floor((e.clientY - rect.top) / rect.height * SIZE);
+  return (r >= 0 && r < SIZE && c >= 0 && c < SIZE) ? { r, c } : null;
+}
+
+let down = null;
+grid.addEventListener("pointerdown", e => {
+  if (busy) return;
+  const p = cellFromEvent(e); if (!p) return;
+  down = { ...p, x: e.clientX, y: e.clientY };
+});
+grid.addEventListener("pointermove", e => {
+  if (!down || busy) return;
+  const dx = e.clientX - down.x, dy = e.clientY - down.y;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+  const a = { r: down.r, c: down.c };
+  const b = Math.abs(dx) > Math.abs(dy)
+    ? { r: a.r, c: a.c + Math.sign(dx) } : { r: a.r + Math.sign(dy), c: a.c };
+  down = null;
+  if (b.r < 0 || b.r >= SIZE || b.c < 0 || b.c >= SIZE) return;
+  clearSel(); trySwap(a, b);
+});
+grid.addEventListener("pointerup", e => {
+  if (!down || busy) { down = null; return; }
+  const p = { r: down.r, c: down.c }; down = null;
+  if (!selected) { selected = p; board[p.r][p.c].el.classList.add("sel"); return; }
+  const dist = Math.abs(selected.r - p.r) + Math.abs(selected.c - p.c);
+  if (dist === 1) { const a = selected; clearSel(); trySwap(a, p); }
+  else { clearSel(); selected = p; board[p.r][p.c].el.classList.add("sel"); }
+});
+
+$("restart").addEventListener("click", newGame);
+let hintTimer = null;
+function clearHint() {
+  clearTimeout(hintTimer);
+  document.querySelectorAll(".cell.hint").forEach(el => el.classList.remove("hint"));
+}
+$("hint").addEventListener("click", () => {
+  if (busy) return;
+  clearSel(); clearHint();
+  const options = findMoves();
+  if (!options.length) return;
+  const [a, b] = options[Math.floor(Math.random() * options.length)];
+  board[a.r][a.c].el.classList.add("hint");
+  board[b.r][b.c].el.classList.add("hint");
+  say("Try swapping the two glowing sweets.");
+  hintTimer = setTimeout(clearHint, 3000);
+});
+
+loadSweets(SWEET_IMAGES);
+newGame();
+</script>
+</body>
+</html>

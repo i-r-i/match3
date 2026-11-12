@@ -1,0 +1,267 @@
+{
+  "imgs/Abrams.png": [
+    49,
+    57,
+    68
+  ],
+  "imgs/Apollo.png": [
+    96,
+    52,
+    46
+  ],
+  "imgs/Baba.png": [
+    135,
+    93,
+    90
+  ],
+  "imgs/Bebop.png": [
+    102,
+    79,
+    55
+  ],
+  "imgs/Billy.png": [
+    73,
+    55,
+    47
+  ],
+  "imgs/Cadence.png": [
+    109,
+    148,
+    134
+  ],
+  "imgs/Calico.png": [
+    86,
+    75,
+    83
+  ],
+  "imgs/Celeste.png": [
+    125,
+    118,
+    167
+  ],
+  "imgs/Deadman Danny.png": [
+    82,
+    57,
+    45
+  ],
+  "imgs/Drifter.png": [
+    60,
+    46,
+    49
+  ],
+  "imgs/Dynamo.png": [
+    70,
+    76,
+    61
+  ],
+  "imgs/Fathom.png": [
+    86,
+    117,
+    120
+  ],
+  "imgs/Graves.png": [
+    157,
+    154,
+    151
+  ],
+  "imgs/Grey Talon.png": [
+    122,
+    117,
+    100
+  ],
+  "imgs/Haze.png": [
+    19,
+    12,
+    4
+  ],
+  "imgs/Holliday.png": [
+    96,
+    69,
+    49
+  ],
+  "imgs/Infernus.png": [
+    99,
+    65,
+    51
+  ],
+  "imgs/Ivy.png": [
+    74,
+    63,
+    61
+  ],
+  "imgs/Kelvin.png": [
+    131,
+    109,
+    96
+  ],
+  "imgs/Lady Geist.png": [
+    114,
+    119,
+    106
+  ],
+  "imgs/Lash.png": [
+    132,
+    101,
+    75
+  ],
+  "imgs/McGinnis.png": [
+    112,
+    73,
+    67
+  ],
+  "imgs/Mina.png": [
+    62,
+    51,
+    68
+  ],
+  "imgs/Mirage.png": [
+    69,
+    46,
+    54
+  ],
+  "imgs/Mo & Krill.png": [
+    111,
+    102,
+    92
+  ],
+  "imgs/Nurse Harrow.png": [
+    104,
+    82,
+    79
+  ],
+  "imgs/Paige.png": [
+    129,
+    96,
+    68
+  ],
+  "imgs/Paradox.png": [
+    57,
+    43,
+    44
+  ],
+  "imgs/Pocket.png": [
+    75,
+    58,
+    36
+  ],
+  "imgs/Rat King.png": [
+    87,
+    62,
+    53
+  ],
+  "imgs/Raven.png": [
+    122,
+    88,
+    75
+  ],
+  "imgs/Rem.png": [
+    53,
+    61,
+    75
+  ],
+  "imgs/Rutger.png": [
+    103,
+    82,
+    61
+  ],
+  "imgs/Seven.png": [
+    63,
+    57,
+    32
+  ],
+  "imgs/Shiv.png": [
+    99,
+    80,
+    73
+  ],
+  "imgs/Silver.png": [
+    140,
+    113,
+    104
+  ],
+  "imgs/Sinclair.png": [
+    77,
+    74,
+    96
+  ],
+  "imgs/Solomon.png": [
+    111,
+    100,
+    94
+  ],
+  "imgs/The Boss.png": [
+    117,
+    107,
+    109
+  ],
+  "imgs/The Doorman.png": [
+    124,
+    85,
+    66
+  ],
+  "imgs/Thumper.png": [
+    99,
+    83,
+    93
+  ],
+  "imgs/Trapper.png": [
+    83,
+    73,
+    59
+  ],
+  "imgs/Vandal.png": [
+    126,
+    120,
+    114
+  ],
+  "imgs/Venator.png": [
+    98,
+    79,
+    82
+  ],
+  "imgs/Victor.png": [
+    48,
+    48,
+    52
+  ],
+  "imgs/Vindicta.png": [
+    90,
+    115,
+    166
+  ],
+  "imgs/Violet.png": [
+    69,
+    45,
+    53
+  ],
+  "imgs/Viscous.png": [
+    30,
+    113,
+    26
+  ],
+  "imgs/Vyper.png": [
+    81,
+    60,
+    11
+  ],
+  "imgs/Warden.png": [
+    70,
+    62,
+    68
+  ],
+  "imgs/Wraith.png": [
+    92,
+    79,
+    87
+  ],
+  "imgs/Wrecker.png": [
+    114,
+    125,
+    116
+  ],
+  "imgs/Yamato.png": [
+    74,
+    65,
+    84
+  ]
+}

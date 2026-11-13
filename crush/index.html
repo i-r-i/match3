@@ -39,6 +39,12 @@
   .side button::before { background: var(--cream); transition: background .15s; }
   .side button:hover::before { background: #fff4d8; }
   .side button:active::before { background: var(--accent); }
+
+  .side button.toggle { color: var(--cream); padding: 10px 18px; font-size: .9rem; }
+  .side button.toggle::before { background: none; box-shadow: inset 0 0 0 3px var(--cream); }
+  .side button.toggle:hover { color: #fff4d8; }
+  .side button.toggle[aria-pressed="false"] { opacity: .55; }
+
   .side #hint { color: var(--cream); }
   .side #hint::before { background: none; box-shadow: inset 0 0 0 3px var(--cream); }
   .side #hint:hover { color: #fff4d8; }
@@ -119,6 +125,8 @@
         <div class="stat"><span>Best</span><b id="best">0</b></div>
         <button id="restart">New game</button>
         <button id="hint">Hint</button>
+        <button id="musicBtn" class="toggle">Music: on</button>
+        <button id="sfxBtn" class="toggle">Sound: on</button>
       </div>
       <div id="board"><div class="grid" id="grid"></div></div>
     </div>
@@ -185,6 +193,31 @@ const MAX_TYPES = 7;
 const MIN_LIGHTNESS = 40;
 const MIN_COLOUR_DIST = 40;
 const SRC_PATH = "../";
+
+
+
+const store = {
+  get(key, fallback) { try { const v = localStorage.getItem(key); return v === null ? fallback : v === "1"; } catch (e) { return fallback; } },
+  set(key, on) { try { localStorage.setItem(key, on ? "1" : "0"); } catch (e) {} }
+};
+
+const AUDIO = {
+  sfxVolume: 0.6, musicVolume: 0.35,
+  sfxOn: store.get("sfxOn", true), musicOn: store.get("musicOn", true), started: false,
+  sfx: new Audio("../sounds/ui_get_gold_01.mp3"),
+  music: new Audio("../sounds/music_hideout_rem_70bpm.mp3"),
+  playSfx() {
+    if (!this.sfxOn) return;
+    const a = this.sfx.cloneNode();
+    a.volume = this.sfxVolume;
+    a.play().catch(() => {});
+  },
+  startMusic() { this.started = true; if (this.musicOn) this.music.play().catch(() => {}); },
+  setMusic(on) { this.musicOn = on; store.set("musicOn", on); if (on) this.startMusic(); else this.music.pause(); },
+  setSfx(on) { this.sfxOn = on; store.set("sfxOn", on); }
+};
+AUDIO.music.loop = true;
+AUDIO.music.volume = AUDIO.musicVolume;
 /* ---------------------------- */
 
 const grid = document.getElementById("grid");
@@ -631,6 +664,7 @@ async function trySwap(a, b) {
     await wait(240);
     say("No match there. Try another swap.");
   } else {
+    
     moves--; updateHud();
     await resolve();
   }
@@ -665,6 +699,7 @@ async function resolve() {
   while ((m = findMatches()).length) {
     combo++;
     score += m.length * 10 * combo;
+    AUDIO.playSfx();
     updateHud();
     if (combo > 1) say(`Combo x${combo}!`); else say("");
     m.forEach(i => {
@@ -774,7 +809,21 @@ $("hint").addEventListener("click", () => {
   say("Try swapping the two glowing sweets.");
   hintTimer = setTimeout(clearHint, 3000);
 });
+function syncAudioButtons() {
+  $("musicBtn").textContent = AUDIO.musicOn ? "Music: on" : "Music: off";
+  $("musicBtn").setAttribute("aria-pressed", AUDIO.musicOn);
+  $("sfxBtn").textContent = AUDIO.sfxOn ? "Sound: on" : "Sound: off";
+  $("sfxBtn").setAttribute("aria-pressed", AUDIO.sfxOn);
+}
 
+$("musicBtn").addEventListener("click", () => { AUDIO.setMusic(!AUDIO.musicOn); syncAudioButtons(); });
+$("sfxBtn").addEventListener("click", () => { AUDIO.setSfx(!AUDIO.sfxOn); syncAudioButtons(); });
+addEventListener("pointerdown", () => AUDIO.startMusic(), { once: true });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) AUDIO.music.pause();
+  else if (AUDIO.started && AUDIO.musicOn) AUDIO.music.play().catch(() => {});
+});
+syncAudioButtons();
 loadSweets(SWEET_IMAGES);
 newGame();
 </script>

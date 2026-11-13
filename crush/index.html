@@ -132,7 +132,7 @@
       <div id="board"><div class="grid" id="grid"></div></div>
     </div>
   </div>
-  <div class="msg" id="msg"></div>
+  <!-- <div class="msg" id="msg"></div> -->
 
 <script>
 /* ---------- CONFIG ---------- */
@@ -595,7 +595,6 @@ async function newGame() {
     }
   }
   updateHud();
-  say("Swap two neighbouring sweets to line up three or more.");
   if (!findMoves().length) newGame();
 }
 
@@ -605,9 +604,6 @@ function updateHud() {
     best = score; $("best").textContent = best;
     try { localStorage.setItem("sweetBest", best); } catch (e) {}
   }
-}
-function say(t) { 
-  // $("msg").textContent = t; 
 }
 
 function findMatches() {
@@ -663,7 +659,6 @@ async function trySwap(a, b) {
   if (!findMatches().length) {
     swapCells(a, b);           // swap back
     await wait(240);
-    say("No match there. Try another swap.");
   } else {
     
     moves--; updateHud();
@@ -672,7 +667,7 @@ async function trySwap(a, b) {
   clearSel();
   busy = false;
   if (moves <= 0) return gameOver();
-  if (!findMoves().length) { say("No moves left. Shuffling…"); await shuffle(); }
+  if (!findMoves().length) { await shuffle(); }
 }
 
 function burst(r, c, color) {
@@ -702,7 +697,7 @@ async function resolve() {
     score += m.length * 10 * combo;
     AUDIO.playSfx();
     updateHud();
-    if (combo > 1) say(`Combo x${combo}!`); else say("");
+    
     m.forEach(i => {
       const r = Math.floor(i / SIZE), c = i % SIZE;
       const cellObj = board[r][c], s = sweets[cellObj.type];
@@ -747,12 +742,11 @@ async function shuffle() {
   } while (findMatches().length || !findMoves().length);
   cells.forEach((obj, i) => place(obj.el, Math.floor(i / SIZE), i % SIZE));
   await wait(300);
-  say(""); busy = false;
+  busy = false;
 }
 
 function gameOver() {
   busy = true;
-  say(`Out of moves! Final score: ${score}. Press “New game” to play again.`);
 }
 
 function clearSel() {
@@ -807,7 +801,6 @@ $("hint").addEventListener("click", () => {
   const [a, b] = options[Math.floor(Math.random() * options.length)];
   board[a.r][a.c].el.classList.add("hint");
   board[b.r][b.c].el.classList.add("hint");
-  say("Try swapping the two glowing sweets.");
   hintTimer = setTimeout(clearHint, 3000);
 });
 function syncAudioButtons() {
